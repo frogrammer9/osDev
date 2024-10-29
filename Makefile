@@ -22,6 +22,8 @@ $(BUILD_DIR)/os.img: bootloader
 	dd if=/dev/zero of=$(BUILD_DIR)/os.img bs=512 count=2880
 	mkfs.fat -F 12 -n "NBOS" $(BUILD_DIR)/os.img
 	dd if=$(BUILD_DIR)/boot/bootl.bin of=$(BUILD_DIR)/os.img conv=notrunc
+	mcopy -i $(BUILD_DIR)/os.img test.txt "::test.txt"
+	mcopy -i $(BUILD_DIR)/os.img test.txt "::test2.txt"
 
 bootloader: stage1 
 

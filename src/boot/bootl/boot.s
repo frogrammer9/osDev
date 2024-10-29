@@ -31,12 +31,12 @@ ebr_system_ident:				db 'FAT12   '				; Must be 8 chars padded with spaces
 ; Disk Adress Packet Structure
 daps:
 						db 0x10 ; Size if this struct
-						db 0	; Required
-daps_sectors_to_read:	dw 0
-daps_buffer_offset:		dw 0	; Adress offset
-						dw 0	; Adress segment - 0000
-daps_LBA_low:			dd 0
-						dd 0	; daps_LBA_high - not used
+						db 0x0	; Required
+daps_sectors_to_read:	dw 0x0
+daps_buffer_offset:		dw 0x0	; Adress offset
+						dw 0x0	; Adress segment - 0000
+daps_LBA_low:			dd 0x0
+						dd 0x0	; daps_LBA_high - not used
 
 ; Setting up data segments
 init:
@@ -59,34 +59,60 @@ puts: ; ptr to string in ax
 	mov ah, 0x0e ; putc in TTY mode
 	mov bx, 0 ; page number
 	cld
-	.puts_loop:
+	.loop:
 	lodsb
 	or al, al
-	jz .puts_done
+	jz .done
 	int 0x10
-	jmp .puts_loop
-	.puts_done:
+	jmp .loop
+	.done:
 	pop bx
 	pop si
 	ret
 
-load_file: ; ax - ptr to string with file name | bx - buffer adress offset (0000:BUFF)
-
-load_cluster: ; ax, bx - LBA | cx - 0000:BUFF | dx - size
+load_sectors: ; ax - LBA (ds(0):ax) | bx - 0000:BUFF | cx - size
 	push si
-	mov [daps_sectors_to_read], dx
-	mov [daps_buffer_offset], cx
-	mov [daps_LBA_low], ax
-	mov [daps_LBA_low + 2], bx
+	push ax
+	push dx
+	mov [daps + 2], cx
+	mov [daps + 4], bx
+	mov [daps + 8], ax
 	mov ah, 0x42
-	mov dl, [ebr_drive_number]
-	mov si, dap
+	mov dl, 0x80
+	mov si, daps
 	int 0x13
-	jc .error
+	jc error
+	pop dx
+	pop ax
+	pop si
 	ret
 
-find_file: ; ax - ptr to string with the file name
+find_file: ; ax - ptr to the string with the file name | bx - ptr to buffer | returns ax - cluster number (0 if NOT found)
+	push si
+	push cx
 
+	mov di, bx
+	xor bx, bx
+	mov si, ax
+	.loop:
+	mov cx, 11	; Compare up to 11 chars
+	push di
+	repe cmpsb
+	pop di
+	je .found
+	add di, 32
+	inc bx
+	cmp bx, [bpb_root_dir_entries_count]
+	jl .loop
+	xor ax, ax
+	jmp .done
+	.found:
+	mov ax, [di + 26]
+	.done:
+	pop cx
+	pop si
+
+	ret
 
 
 main:
@@ -94,33 +120,62 @@ main:
 	mov bx, 0x55AA
 	mov dl, 0x80
 	int 0x13
-	jc .benserr ; Bios extenctions not supported error
+	jc benserr ; Bios extenctions not supported error
 
 	push es
 	mov ah, 0x8
 	mov dl, 0x80
 	int 0x13
-	jc .error
+	jc error
 	pop es
 	and cl, 0x3F
 	xor ch, ch
 	inc dh
-	; This i'm getting the disk params from bios in case the disk got corrupted
-	mov [bdb_sectors_per_track], cx
+	; There i'm getting the disk params from bios in case the disk got corrupted
+	mov [bpb_sectors_per_track], cx
 	mov [ebr_drive_number], dl
-	mov [bdb_head_count], dh
-
+	mov [bpb_head_count], dh
+	; Write "Loading..."
 	mov ax, loadingmsg
 	call puts
+	; Calculate the LBA of the directory entry on the FAT12 disk
+	mov ax, [bpb_FAT_count]
+	mov bx, [bpb_sectors_per_FAT]
+	mul bx
+	mov bx, [bpb_reserved_sectors]
+	add bx, ax
+	mov bx, 19
+	; Calculate the size (amount of sectors) of the directory entry
+	mov ax, [bpb_root_dir_entries_count]
+	shl ax, 5
+	mov dx, 0
+	div word [bpb_bytes_per_sector]
+	mov cx, ax
+	; Loading the directory entry
+	mov ax, bx
+	mov bx, ROOT
+	call load_sectors
+	mov ax, filename
+	call find_file
+	;
+	; TEMP
+	;
+	or ax, ax
+	mov ax, filename 
+	jz .temp
+	mov ax, loadingmsg
+	.temp:
+	call puts
+
 
 	call hang
 
-.benserr:
+benserr:
 	mov ax, benserrmsg
 	call puts
 	call hang
 
-.error:
+error:
 	mov ax, errormsg
 	call puts
 	call hang
@@ -132,6 +187,9 @@ hang:
 loadingmsg: db 'Loading...', END
 benserrmsg: db 'BENSERR', END
 errormsg:	db 'ERROR', END
+filename:	db 'TEST    TXT'
 
 times 510 - ($ - $$) db 0 
 dw 0xAA55
+
+ROOT: 

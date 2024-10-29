@@ -6,9 +6,9 @@ BUILD_DIR?=build
 
 all: stage1
 
-stage1: $(BUILD_DIR)/bootl.bin
+stage1: $(BUILD_DIR)/boot/bootl.bin
 
-$(BUILD_DIR)/bootl.bin: always
+$(BUILD_DIR)/boot/bootl.bin: always
 	$(ASM) boot.s -f bin -o $(BUILD_DIR)/boot/bootl.bin
 
 clean:
