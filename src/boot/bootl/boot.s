@@ -112,70 +112,70 @@ find_file: ; ax - ptr to the string with the file name | di - ptr to buffer | re
 	mov ax, 0
 	jmp .done
 	.found:
-	mov ax, di 
-	add ax, 26
+	add di, 26
+	mov ax, [di]
 	.done:
 	pop si
 	pop cx
 	pop bx
 	ret
 
-load_file: ; bx - offset target adress | ax - cluster number | cx - Data segment offset
-	push dx
-	push di
-	mov di, cx
-	xor dx, dx
-
-	.loop:
-	; loading
+load_file: ; bx - offset target adress
 	push ax
-	mul byte [bpb_sectors_per_cluster]
-	add ax, di
-	xor cx, cx
-	mov cl, [bpb_sectors_per_cluster]
-	mov [DEBUG], ax
-	;call load_sectors
+	push dx
+	push cx
+	push si
 
+	xor cx, cx
+	xor dx, dx
+	mov cl, [bpb_sectors_per_cluster]
+	.loop:
+	mov ax, [cluster_number]
+	sub ax, 2
+	mul cx
+	add ax, [data_offset]
+
+	mov [DEBUG], ax
+	call load_sectors
 	mov ax, cx
 	mul word [bpb_bytes_per_sector]
-	add bx, 512
+	add bx, ax
 
-	; Getting the next cluster number
-	pop ax
-	add ax, 2
+	mov si, 3
+	mov ax, [cluster_number]
 	shr ax, 1
-	push bx
-	jnc .even
-	; odd
-	mov bx, ax
-	add bx, ax
-	add bx, ax
-	mov ax, BUFF
-	add bx, ax
-	mov ax, [bx]
+	jc .odd
+	; even
+	mul si
+	add ax, BUFF
+	mov si, ax
+	mov ax, [ds:si]
+	and ax, 0x0fff
+	jmp .done
+	.odd:
+	mul si
+	add ax, BUFF
+	mov si, ax
+	mov ax, [ds:si]
 	shr ax, 4
-	sub ax, 2
-	jmp .check
-	.even:
-	mov bx, ax
-	add bx, ax
-	add bx, ax
-	mov ax, BUFF
-	add bx, ax
-	mov ax, [bx]
-	and ax, 0xfff
-	sub ax, 2
-	.check:
-	pop bx
-	xor dx, dx
-	cmp ax, 0xff8
+
+
+	mov [DEBUG], ax
+	call hang
+
+
+	.done:
+	mov [cluster_number], ax
+	cmp ax, 0x0ff8
+
+
 	jl .loop
 
-	pop di
+	pop si
+	pop cx
 	pop dx
-
+	pop ax
 	ret
-
 
 main:
 	mov ah, 0x41
@@ -184,16 +184,6 @@ main:
 	int 0x13
 	jc benserr ; Bios extenctions not supported error
 
-	push es
-	mov ah, 0x8
-	mov dl, 0x80
-	int 0x13
-	jc error
-	pop es
-	and cl, 0x3F
-	xor ch, ch
-	inc dh
-	; There i'm getting the disk params from bios in case the disk got corrupted
 	mov [bpb_sectors_per_track], cx
 	mov [ebr_drive_number], dl
 	mov [bpb_head_count], dh	; ERROR POSSIBLE
@@ -208,14 +198,14 @@ main:
 	push bx
 	mov bx, [bpb_reserved_sectors]
 	add bx, ax
-	mov si, bx
+	mov [data_offset], bx
 	; Calculate the size (amount of sectors) of the directory entry
 	mov ax, [bpb_root_dir_entries_count]
 	shl ax, 5
 	xor dx, dx
 	div word [bpb_bytes_per_sector]
 	mov cx, ax
-	add si, cx
+	add [data_offset], cx
 	; Loading the directory entry
 	mov ax, bx
 	mov bx, BUFF
@@ -223,20 +213,15 @@ main:
 	mov ax, filename
 	mov di, BUFF
 	call find_file
-	; check if ax is 0 and errro
-	mov bx, ax
-	mov ax, [bx]
-	sub ax, 2
+	; TODO: check if ax is 0 and error
 	mov [cluster_number], ax
 	; Load FAT into memory
 	mov ax, [bpb_reserved_sectors]
 	mov bx, BUFF
 	pop cx
-	call load_sectors
+	call load_sectors ; Load FAT into memory
 
-	mov ax, [cluster_number]
 	mov bx, 0x8500	; This is dengeraus and needs to bo changed
-	mov cx, si
 	call load_file
 
 	mov ax, 0x8500
@@ -263,6 +248,7 @@ benserrmsg: 		db 'BENSERR', END
 errormsg:			db 'ERROR', END
 filename:			db 'TEST    TXT'
 cluster_number:		dw 0
+data_offset:		dw 0
 
 times 510 - ($ - $$) db 0 
 dw 0xAA55
