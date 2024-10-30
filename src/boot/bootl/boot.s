@@ -135,7 +135,6 @@ load_file: ; bx - offset target adress
 	mul cx
 	add ax, [data_offset]
 
-	mov [DEBUG], ax
 	call load_sectors
 	mov ax, cx
 	mul word [bpb_bytes_per_sector]
@@ -155,15 +154,10 @@ load_file: ; bx - offset target adress
 	.odd:
 	mul si
 	add ax, BUFF
+	add ax, 1
 	mov si, ax
 	mov ax, [ds:si]
 	shr ax, 4
-
-
-	mov [DEBUG], ax
-	call hang
-
-
 	.done:
 	mov [cluster_number], ax
 	cmp ax, 0x0ff8
