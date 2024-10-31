@@ -19,12 +19,16 @@ all: image
 image: $(BUILD_DIR)/os.img
 
 $(BUILD_DIR)/os.img: bootloader 
-	dd if=/dev/zero of=$(BUILD_DIR)/os.img bs=512 count=131050
-	mkfs.fat -F 32 $(BUILD_DIR)/os.img
-	dd if=$(BUILD_DIR)/boot/bootl.bin of=$(BUILD_DIR)/os.img conv=notrunc
-	mcopy -i $(BUILD_DIR)/os.img test.txt "::test.txt"
+	dd if=/dev/zero of=$(BUILD_DIR)/os.img bs=1M count=10
+	dd if=/dev/zero of=$(BUILD_DIR)/root.img bs=1M count=8
+	dd if=/dev/zero of=$(BUILD_DIR)/boot.img bs=512 count=2000
+	mkfs.ext2 $(BUILD_DIR)/root.img
+	dd if=$(BUILD_DIR)/boot/bootl.bin of=$(BUILD_DIR)/boot.img conv=notrunc
+	dd if=$(BUILD_DIR)/boot/ssbootl.bin of=$(BUILD_DIR)/boot.img conv=notrunc seek=4
+	dd if=$(BUILD_DIR)/root.img of=$(BUILD_DIR)/os.img conv=notrunc seek=2
+	dd if=$(BUILD_DIR)/boot.img of=$(BUILD_DIR)/os.img conv=notrunc
 
-bootloader: stage1 
+bootloader: stage1 stage2
 
 stage1: $(BUILD_DIR)/boot/bootl.bin
 
