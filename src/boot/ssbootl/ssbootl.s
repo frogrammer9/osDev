@@ -1,34 +1,23 @@
-org 0x0000
 bits 16
 
-jmp entry
+section _ENTRY class=CODE
 
-puts: ; si - ptr to string
-	push ax
-	push bx
-	mov ah, 0xe
-	mov bx, 0x0
-	cld
-	.loop:
-	lodsb
-	or al, al
-	jz .done
-	int 0x10
-	jmp .loop
-	.done:
-	pop bx
-	pop ax
-	ret
+extern _cmain_
+global entry
 
 entry:
-	mov si, testmsg
-	call puts
-	jmp hang
+	cli
+	mov ax, ds
+	sub ax, 0x20 ; Move the stack before the boot partition to keeb the MBR in memory
+	mov ss, ax
+	mov sp, 0
+	mov bp, sp
+	sli
 
-hang:
+	xor dh, dh
+	push dx
+	call _cmain_
+
+	cli
 	hlt
-	jmp hang
-
-%define END 0x0D, 0x0A, 0
-testmsg:	db 'ssbootl is loading fuck yeah', END
 

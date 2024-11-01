@@ -13,6 +13,7 @@ always:
 
 clean:
 	rm -rf build
+	rm *.mem
 
 all: image
 
