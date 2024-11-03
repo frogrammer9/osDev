@@ -4,7 +4,7 @@
 
 int __cdecl cmain_(u16 drive_number) {
 
-	puts("chuj dupa biskupa\n");
+	printf("halo, %u, %u \n", 12, 12);
 
 	x_hang();
 	return 1; // This program should never return

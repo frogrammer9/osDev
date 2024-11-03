@@ -1,4 +1,5 @@
 #!/bin/bash
 
-bear -- make all;
+if make all ; then
 qemu-system-i386 -hda build/os.img
+fi

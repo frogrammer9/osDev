@@ -3,8 +3,8 @@
 
 #include "type.h"
 
-void puts(cstr str);
-void putc(char c);
+int puts(cstr str);
+int putc(char c);
 
 void __cdecl printf(cstr format, ...);
 

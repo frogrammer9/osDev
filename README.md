@@ -2,6 +2,5 @@
 
 memory map:  
 
-0x7400 - ssbool stack  
 0x7c00 - bootl  
 0x7e00 - ssbootl  
