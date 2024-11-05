@@ -90,7 +90,7 @@ void __cdecl printf(const char* format, ...) {
 							case 'h':
 								puts("error : printf - invalid format string: \"");
 								putc(*format);
-								puts("\".\n");
+								puts("\".\r\n");
 								return;
 							break;
 							default: m_length = 4; m_lengthBuffer = 'l'; break;
@@ -102,7 +102,7 @@ void __cdecl printf(const char* format, ...) {
 							case 'l':
 								puts("error : printf - invalid format string: \"");
 								putc(*format);
-								puts("\".\n");
+								puts("\".\r\n");
 								return;
 							break;
 							default: m_length = 2; m_lengthBuffer = 'h'; break;
@@ -132,7 +132,7 @@ void __cdecl printf(const char* format, ...) {
 					default:
 						puts("error : printf - invalid format string: \"");
 						putc(*format);
-						puts("\".\n");
+						puts("\".\r\n");
 					break;
 				}
 				m_state = st_normal;

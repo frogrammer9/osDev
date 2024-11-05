@@ -1,7 +1,7 @@
 #ifndef _OS_X86_
 #define _OS_X86_
 
-#include "type.h"
+#include "stdint.h"
 
 typedef struct {
 	u8 size;

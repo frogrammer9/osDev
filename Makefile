@@ -10,6 +10,7 @@ BUILD_DIR=build
 
 always:
 	mkdir -p build
+	mkdir -p build/part
 
 clean:
 	rm -rf build
@@ -24,13 +25,13 @@ image: $(BUILD_DIR)/os.img
 
 $(BUILD_DIR)/os.img: bootloader 
 	dd if=/dev/zero of=$(BUILD_DIR)/os.img bs=1M count=10
-	dd if=/dev/zero of=$(BUILD_DIR)/root.img bs=1M count=8
-	dd if=/dev/zero of=$(BUILD_DIR)/boot.img bs=512 count=2000
-	mkfs.ext2 $(BUILD_DIR)/root.img
-	dd if=$(BUILD_DIR)/boot/bootl.bin of=$(BUILD_DIR)/boot.img conv=notrunc
-	dd if=$(BUILD_DIR)/boot/ssbootl.bin of=$(BUILD_DIR)/boot.img conv=notrunc seek=4
-	dd if=$(BUILD_DIR)/root.img of=$(BUILD_DIR)/os.img conv=notrunc seek=2
-	dd if=$(BUILD_DIR)/boot.img of=$(BUILD_DIR)/os.img conv=notrunc
+	dd if=/dev/zero of=$(BUILD_DIR)/part/root.img bs=1M count=8
+	dd if=/dev/zero of=$(BUILD_DIR)/part/boot.img bs=512 count=2000
+	mkfs.ext2 $(BUILD_DIR)/part/root.img
+	dd if=$(BUILD_DIR)/boot/bootl.bin of=$(BUILD_DIR)/part/boot.img conv=notrunc
+	dd if=$(BUILD_DIR)/boot/ssbootl.bin of=$(BUILD_DIR)/part/boot.img conv=notrunc seek=4
+	dd if=$(BUILD_DIR)/part/root.img of=$(BUILD_DIR)/os.img conv=notrunc seek=2
+	dd if=$(BUILD_DIR)/part/boot.img of=$(BUILD_DIR)/os.img conv=notrunc
 
 bootloader: stage1 stage2
 

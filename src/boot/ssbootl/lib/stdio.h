@@ -1,7 +1,7 @@
 #ifndef _OS_STDIO_
 #define _OS_STDIO_
 
-#include "type.h"
+#include "stdint.h"
 
 int puts(cstr str);
 int putc(char c);

@@ -8,5 +8,5 @@ bool disk_read(u16 disk_number, u32 LBA, u8 sectors_count, u8 far* target) {
 	D.count = sectors_count;
 	D.LBA = LBA;
 	D.target = target;
-	x_disk_read(disk_number, &D);
+	return x_disk_read(disk_number, &D);
 }
