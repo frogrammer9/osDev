@@ -14,7 +14,7 @@ typedef struct {
 
 void __cdecl x_write_char_teletype(char c, u8 page);
 
-void __cdecl x_disk_read(daps* d);
+u16 __cdecl x_disk_read(u16 drive_number, daps* d); // Returns 1 if fails
 
 void __cdecl x_div_64_32(u64 divident, u32 divisor, u64* quotientOut, u32* remainderOut);
 

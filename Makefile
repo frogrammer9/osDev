@@ -6,7 +6,7 @@ CL16=/usr/bin/watcom/binl64/wlink
 SRC_DIR=src
 BUILD_DIR=build
 
-.PHONY: all clean always image bootloader
+.PHONY: all clean always image bootloader run
 
 always:
 	mkdir -p build
@@ -16,6 +16,9 @@ clean:
 	rm *.mem
 
 all: image
+
+run: all
+	qemu-system-i386 -hda build/os.img
 
 image: $(BUILD_DIR)/os.img
 

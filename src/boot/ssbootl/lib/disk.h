@@ -3,6 +3,6 @@
 
 #include "type.h"
 
-bool disk_read(u32 LBA, u8 sectors_count, u8 far* target);
+bool disk_read(u16 disk_number, u32 LBA, u8 sectors_count, u8 far* target);
 
 #endif
